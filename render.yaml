@@ -2,8 +2,13 @@ services:
   - type: web
     name: conflictresolutionbot
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    buildCommand: |
+      python -m venv .venv
+      . .venv/bin/activate
+      pip install -r requirements.txt
+    startCommand: |
+      . .venv/bin/activate
+      python main.py
     envVars:
       - key: BOT_TOKEN
         value: 7579169408:AAFWHKaSr5ifhCFx3AmSUYFhpSLtZCdQqjY

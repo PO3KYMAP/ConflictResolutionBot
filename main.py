@@ -397,5 +397,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    app = asyncio.run(main())
-    web.run_app(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))
+    try:
+        app = asyncio.run(main())
+        web.run_app(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))
+    except Exception as e:
+        print(f"Ошибка при запуске приложения: {e}")
+        sys.exit(1)
