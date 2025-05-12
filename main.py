@@ -337,9 +337,16 @@ async def answer_callback(callback: CallbackQuery):
 
 
 async def webhook(request):
-    update = await request.json()
-    await dp.feed_webhook_update(bot, update)
-    return web.Response()
+    try:
+        print("Received webhook request")
+        update = await request.json()
+        print(f"Update: {update}")
+        await dp.feed_webhook_update(bot, update)
+        print("Update processed successfully")
+        return web.Response()
+    except Exception as e:
+        print(f"Error in webhook: {e}")
+        return web.Response(status=500)
 
 
 async def main():
