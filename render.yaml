@@ -15,4 +15,4 @@ services:
       - key: WEBHOOK_URL
         value: https://conflictresolutionbot.onrender.com/webhook
       - key: PORT
-        value: 8000 
+        value: 8000

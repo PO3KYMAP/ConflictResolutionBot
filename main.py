@@ -9,17 +9,25 @@ from aiohttp import web
 from dotenv import load_dotenv
 import os
 import sys
+import logging
+import traceback
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Загружаем переменные окружения
 load_dotenv()
 
 API_TOKEN = '7579169408:AAFWHKaSr5ifhCFx3AmSUYFhpSLtZCdQqjY'
 if not API_TOKEN:
-    print("Ошибка: BOT_TOKEN не найден в переменных окружения!")
-    print("Пожалуйста, создайте файл .env и добавьте в него BOT_TOKEN=ваш_токен_бота")
+    logger.error("Ошибка: BOT_TOKEN не найден в переменных окружения!")
     sys.exit(1)
 
-print(f"Токен загружен: {API_TOKEN[:10]}...")  # Для отладки
+logger.info(f"Токен загружен: {API_TOKEN[:10]}...")
 
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 dp = Dispatcher()
@@ -344,62 +352,94 @@ async def answer_callback(callback: CallbackQuery):
 
 async def webhook(request):
     try:
-        print("Получен вебхук запрос")
+        logger.info("Получен вебхук запрос")
         update = await request.json()
-        print(f"Содержимое запроса: {update}")
-        await dp.feed_webhook_update(bot, update)
-        print("Запрос успешно обработан")
-        return web.Response(text="OK")
+        logger.info(f"Содержимое запроса: {update}")
+
+        # Проверяем структуру update
+        if not isinstance(update, dict):
+            logger.error(f"Неверный формат update: {type(update)}")
+            return web.Response(text="Invalid update format", status=400)
+
+        # Проверяем наличие необходимых полей
+        if 'message' not in update and 'callback_query' not in update:
+            logger.error(f"Отсутствуют необходимые поля в update: {update}")
+            return web.Response(text="Missing required fields", status=400)
+
+        try:
+            await dp.feed_webhook_update(bot, update)
+            logger.info("Запрос успешно обработан")
+            return web.Response(text="OK")
+        except Exception as e:
+            logger.error(f"Ошибка при обработке update: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return web.Response(text="Error processing update", status=500)
+
     except Exception as e:
-        print(f"Ошибка в вебхуке: {e}")
-        return web.Response(text="Error", status=500)
+        logger.error(f"Ошибка в вебхуке: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return web.Response(text="Internal server error", status=500)
 
 
-async def main():
+async def on_startup(app):
     try:
-        print("Запуск бота...")
-        print(f"Токен бота: {API_TOKEN[:10]}...")
+        logger.info("Запуск бота...")
+        logger.info(f"Токен бота: {API_TOKEN[:10]}...")
 
         # Проверяем информацию о боте
         bot_info = await bot.get_me()
-        print(f"Информация о боте: {bot_info}")
+        logger.info(f"Информация о боте: {bot_info}")
 
         # Удаляем старый вебхук
-        print("Удаление старого вебхука...")
+        logger.info("Удаление старого вебхука...")
         await bot.delete_webhook(drop_pending_updates=True)
 
         # Получаем URL из переменных окружения
         webhook_url = os.getenv('WEBHOOK_URL', 'https://conflictresolutionbot.onrender.com/webhook')
-        print(f"Установка вебхука на URL: {webhook_url}")
+        logger.info(f"Установка вебхука на URL: {webhook_url}")
 
         # Устанавливаем новый вебхук
         await bot.set_webhook(url=webhook_url)
-        print("Вебхук успешно установлен")
+        logger.info("Вебхук успешно установлен")
 
         # Проверяем статус вебхука
         webhook_info = await bot.get_webhook_info()
-        print(f"Информация о вебхуке: {webhook_info}")
-
-        # Создаем веб-приложение
-        app = web.Application()
-        app.router.add_post('/webhook', webhook)
-
-        # Добавляем обработчик для проверки работоспособности
-        async def health_check(request):
-            return web.Response(text="Bot is running")
-
-        app.router.add_get('/', health_check)
-        print("Веб-приложение создано")
-        return app
+        logger.info(f"Информация о вебхуке: {webhook_info}")
     except Exception as e:
-        print(f"Ошибка в main(): {e}")
+        logger.error(f"Ошибка при запуске: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 
-if __name__ == "__main__":
+async def on_shutdown(app):
     try:
-        app = asyncio.run(main())
+        logger.info("Остановка бота...")
+        await bot.session.close()
+    except Exception as e:
+        logger.error(f"Ошибка при остановке: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
+
+def main():
+    try:
+        # Создаем веб-приложение
+        app = web.Application()
+
+        # Добавляем обработчики
+        app.router.add_post('/webhook', webhook)
+        app.router.add_get('/', lambda request: web.Response(text="Bot is running"))
+
+        # Добавляем обработчики запуска и остановки
+        app.on_startup.append(on_startup)
+        app.on_shutdown.append(on_shutdown)
+
+        # Запускаем приложение
         web.run_app(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))
     except Exception as e:
-        print(f"Ошибка при запуске приложения: {e}")
+        logger.error(f"Ошибка при запуске приложения: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
