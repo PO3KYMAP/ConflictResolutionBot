@@ -343,18 +343,24 @@ async def webhook(request):
 
 async def main():
     try:
+        print("Starting bot...")
+        print(f"Bot token: {API_TOKEN[:10]}...")  # Показываем только начало токена
+
         # Удаляем старый вебхук если он есть
+        print("Deleting old webhook...")
         await bot.delete_webhook(drop_pending_updates=True)
 
         # Получаем URL из переменных окружения
-        webhook_url = os.getenv('WEBHOOK_URL', 'https://your-app-name.onrender.com/webhook')
+        webhook_url = os.getenv('WEBHOOK_URL', 'https://problemsol.onrender.com/webhook')
 
         # Устанавливаем новый вебхук
         await bot.set_webhook(url=webhook_url)
+        print("Webhook set successfully")
 
         # Создаем веб-приложение
         app = web.Application()
         app.router.add_post('/webhook', webhook)
+        print("Web application created")
         return app
     except Exception as e:
         print(f"Error in main(): {e}")
