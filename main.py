@@ -1,3 +1,4 @@
+# main.py
 import asyncio
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
@@ -5,8 +6,13 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 from collections import defaultdict
 from aiohttp import web
+from dotenv import load_dotenv
+import os
 
-API_TOKEN = '7579169408:AAGqYZeK2iARbejuI3X0yrxwP2fRIXnsDIA'
+# Загружаем переменные окружения
+load_dotenv()
+
+API_TOKEN = os.getenv('BOT_TOKEN')
 
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 dp = Dispatcher()
@@ -336,15 +342,23 @@ async def webhook(request):
 
 
 async def main():
-    # Удаляем старый вебхук если он есть
-    await bot.delete_webhook(drop_pending_updates=True)
-    # Устанавливаем новый вебхук
-    await bot.set_webhook(url=f"https://PO3KYMAP.pythonanywhere.com/webhook")
+    try:
+        # Удаляем старый вебхук если он есть
+        await bot.delete_webhook(drop_pending_updates=True)
 
-    # Создаем веб-приложение
-    app = web.Application()
-    app.router.add_post('/webhook', webhook)
-    return app
+        # Получаем URL из переменных окружения
+        webhook_url = os.getenv('WEBHOOK_URL', 'https://your-app-name.onrender.com/webhook')
+
+        # Устанавливаем новый вебхук
+        await bot.set_webhook(url=webhook_url)
+
+        # Создаем веб-приложение
+        app = web.Application()
+        app.router.add_post('/webhook', webhook)
+        return app
+    except Exception as e:
+        print(f"Error in main(): {e}")
+        raise
 
 
 if __name__ == "__main__":
