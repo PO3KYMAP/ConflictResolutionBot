@@ -369,7 +369,7 @@ async def main():
         await bot.delete_webhook(drop_pending_updates=True)
 
         # Получаем URL из переменных окружения
-        webhook_url = os.getenv('WEBHOOK_URL', 'https://problemsol.onrender.com/webhook')
+        webhook_url = os.getenv('WEBHOOK_URL', 'https://conflictresolutionbot.onrender.com/webhook')
         print(f"Установка вебхука на URL: {webhook_url}")
 
         # Устанавливаем новый вебхук
