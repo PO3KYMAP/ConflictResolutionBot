@@ -344,43 +344,58 @@ async def answer_callback(callback: CallbackQuery):
 
 async def webhook(request):
     try:
-        print("Received webhook request")
+        print("Получен вебхук запрос")
         update = await request.json()
-        print(f"Update: {update}")
+        print(f"Содержимое запроса: {update}")
         await dp.feed_webhook_update(bot, update)
-        print("Update processed successfully")
-        return web.Response()
+        print("Запрос успешно обработан")
+        return web.Response(text="OK")
     except Exception as e:
-        print(f"Error in webhook: {e}")
-        return web.Response(status=500)
+        print(f"Ошибка в вебхуке: {e}")
+        return web.Response(text="Error", status=500)
 
 
 async def main():
     try:
-        print("Starting bot...")
-        print(f"Bot token: {API_TOKEN[:10]}...")  # Показываем только начало токена
+        print("Запуск бота...")
+        print(f"Токен бота: {API_TOKEN[:10]}...")
 
-        # Удаляем старый вебхук если он есть
-        print("Deleting old webhook...")
+        # Проверяем информацию о боте
+        bot_info = await bot.get_me()
+        print(f"Информация о боте: {bot_info}")
+
+        # Удаляем старый вебхук
+        print("Удаление старого вебхука...")
         await bot.delete_webhook(drop_pending_updates=True)
 
         # Получаем URL из переменных окружения
         webhook_url = os.getenv('WEBHOOK_URL', 'https://problemsol.onrender.com/webhook')
+        print(f"Установка вебхука на URL: {webhook_url}")
 
         # Устанавливаем новый вебхук
         await bot.set_webhook(url=webhook_url)
-        print("Webhook set successfully")
+        print("Вебхук успешно установлен")
+
+        # Проверяем статус вебхука
+        webhook_info = await bot.get_webhook_info()
+        print(f"Информация о вебхуке: {webhook_info}")
 
         # Создаем веб-приложение
         app = web.Application()
         app.router.add_post('/webhook', webhook)
-        print("Web application created")
+
+        # Добавляем обработчик для проверки работоспособности
+        async def health_check(request):
+            return web.Response(text="Bot is running")
+
+        app.router.add_get('/', health_check)
+        print("Веб-приложение создано")
         return app
     except Exception as e:
-        print(f"Error in main(): {e}")
+        print(f"Ошибка в main(): {e}")
         raise
 
 
 if __name__ == "__main__":
     app = asyncio.run(main())
-    web.run_app(app, host='0.0.0.0', port=8000)
+    web.run_app(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))
