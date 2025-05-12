@@ -8,12 +8,18 @@ from collections import defaultdict
 from aiohttp import web
 from dotenv import load_dotenv
 import os
+import sys
 
 # Загружаем переменные окружения
 load_dotenv()
 
-API_TOKEN = os.getenv('BOT_TOKEN')
-print(f"Token loaded: {API_TOKEN[:10]}...")  # Для отладки
+API_TOKEN = '7579169408:AAFWHKaSr5ifhCFx3AmSUYFhpSLtZCdQqjY'
+if not API_TOKEN:
+    print("Ошибка: BOT_TOKEN не найден в переменных окружения!")
+    print("Пожалуйста, создайте файл .env и добавьте в него BOT_TOKEN=ваш_токен_бота")
+    sys.exit(1)
+
+print(f"Токен загружен: {API_TOKEN[:10]}...")  # Для отладки
 
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 dp = Dispatcher()
