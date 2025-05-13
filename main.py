@@ -428,11 +428,11 @@ async def answer_callback(callback: CallbackQuery):
     state['current_q'] += 1
     buttons = []
     for i, (option, mapping) in enumerate(zip(question['options'], question['mapping'])):
-        prefix = "✅ " if mapping == answer else "⬜ "
+        prefix = "✅ "
         buttons.append([InlineKeyboardButton(
             text=prefix + option,
             callback_data=f"answer:{mapping}",
-            disabled=True  # Делаем все кнопки неактивными
+            disabled=True
         )])
     await callback.message.edit_reply_markup(
         reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
