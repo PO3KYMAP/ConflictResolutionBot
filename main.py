@@ -428,17 +428,15 @@ async def answer_callback(callback: CallbackQuery):
     state['current_q'] += 1
     buttons = []
     for i, (option, mapping) in enumerate(zip(question['options'], question['mapping'])):
-        prefix = "✅ "
+        if mapping == answer:
+            text = f"✅ {option}"
+        else:
+            text = f"⬜ <s>{option}</s>"
         buttons.append([InlineKeyboardButton(
-            text=prefix + option,
+            text=text,
             callback_data=f"answer:{mapping}",
             disabled=True
         )])
-    await callback.message.edit_reply_markup(
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
-    )
-    await send_question(callback.message.chat.id, user_id)
-
 
 async def webhook(request):
     try:
