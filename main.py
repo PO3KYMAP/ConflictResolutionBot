@@ -354,7 +354,6 @@ async def cmd_test(message: Message):
         user_id = message.from_user.id
         user_data[user_id] = {"current_q": 0, "answers": []}
         await send_question(message.chat.id, user_id)
-        print("Write /reset to restart the test")
         logger.info(f"Тест начат для пользователя {message.from_user.id}")
     except Exception as e:
         logger.error(f"Ошибка при обработке команды /test: {e}")
@@ -371,6 +370,7 @@ async def send_question(chat_id, user_id):
     if q_index < len(questions):
         question = questions[q_index]
         await bot.send_message(chat_id, question['text'], reply_markup=get_question_keyboard(q_index))
+        print("Write /reset to restart the test")
     else:
         counts = defaultdict(int)
         for answer in state['answers']:
