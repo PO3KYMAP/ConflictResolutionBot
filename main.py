@@ -437,6 +437,10 @@ async def answer_callback(callback: CallbackQuery):
             callback_data=f"answer:{mapping}",
             disabled=True
         )])
+        await callback.message.edit_reply_markup(
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
+        await send_question(callback.message.chat.id, user_id)
 
 async def webhook(request):
     try:
