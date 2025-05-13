@@ -11,28 +11,23 @@ import os
 import sys
 import logging
 import traceback
+import random
 
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Загружаем переменные окружения
 load_dotenv()
 
 API_TOKEN = '7579169408:AAFWHKaSr5ifhCFx3AmSUYFhpSLtZCdQqjY'
 if not API_TOKEN:
     logger.error("Ошибка: BOT_TOKEN не найден в переменных окружения!")
     sys.exit(1)
-
 logger.info(f"Токен загружен: {API_TOKEN[:10]}...")
-
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 dp = Dispatcher()
-
-# Conflict resolution styles
 styles = {
     'A': 'Avoiding',
     'B': 'Accommodating',
@@ -49,7 +44,6 @@ style_descriptions = {
     'E': '🏆 <b>Competing</b>: You assert your position to achieve your goal.\n<i>Useful when quick action is critical or principle is at stake.</i>'
 }
 
-# Store user states
 user_data = defaultdict(lambda: {"current_q": 0, "answers": []})
 
 questions = [
@@ -215,13 +209,15 @@ Your team has limited budget/resources, and two project ideas are competing for 
 
 
 def get_question_keyboard(question_index):
-    """Generate inline keyboard for a question"""
     question = questions[question_index]
     buttons = []
-    for i, option in enumerate(question['options']):
+    options_with_mapping = list(zip(question['options'], question['mapping']))
+    random.shuffle(options_with_mapping)
+
+    for option, mapping in options_with_mapping:
         buttons.append([InlineKeyboardButton(
             text=option,
-            callback_data=f"answer:{question['mapping'][i]}"
+            callback_data=f"answer:{mapping}"
         )])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -242,7 +238,6 @@ async def cmd_start(message: Message):
             "🛠️ This is a soft skills portfolio project by <b>Bohdan Sharloimov</b>\n"
             "Student ID: <b>104936</b>\n\n"
             "Use /info to get in detail about this project.\n"
-            "Use /resources to get useful learning resources.\n"
             "Use /test to start the assessment!\n"
             "Or /styles to learn about all conflict styles."
         )
@@ -375,23 +370,18 @@ async def send_question(chat_id, user_id):
         question = questions[q_index]
         await bot.send_message(chat_id, question['text'], reply_markup=get_question_keyboard(q_index))
     else:
-        # Test complete — calculate result
         counts = defaultdict(int)
         for answer in state['answers']:
             counts[answer] += 1
         result, desc = get_style_summary(counts)
-
         text = f"<b>🎉 Your dominant Conflict Resolution Style: {styles[result]}</b>\n\n{desc}\n\n"
         text += "✅ <b>Tips for you:</b>\n"
         text += get_advice(result)
-
         await bot.send_message(chat_id, text)
-        # Clear state after completion
         user_data.pop(user_id)
 
 
 def get_advice(style_code):
-    """Give tailored advice"""
     advice = {
         'A': "• Use avoiding when issues are minor.\n• Don't avoid important conflicts too often.\n• Try expressing concerns earlier.",
         'B': "• Good for relationships, but don't neglect your needs.\n• Assert yourself when it matters.\n• Balance harmony with fairness.",
@@ -400,6 +390,26 @@ def get_advice(style_code):
         'E': "• Useful when urgent action is key.\n• Ensure not to alienate others.\n• Be open to other views when time permits."
     }
     return advice[style_code]
+
+
+@dp.message(Command("reset"))
+async def cmd_reset(message: Message):
+    try:
+        logger.info(f"Получена команда /reset от пользователя {message.from_user.id}")
+        user_id = message.from_user.id
+        if user_id in user_data:
+            user_data.pop(user_id)
+            await message.answer("Your progress has been reset. Use /test to start a new assessment.")
+        else:
+            await message.answer("You don't have any active assessment to reset. Use /test to start a new one.")
+        logger.info(f"Сброс прогресса выполнен для пользователя {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /reset: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        try:
+            await message.answer("An error occurred while resetting. Please try again later.")
+        except:
+            pass
 
 
 @dp.callback_query(F.data.startswith("answer:"))
@@ -414,24 +424,13 @@ async def answer_callback(callback: CallbackQuery):
     question = questions[q_index]
     state['answers'].append(answer)
     state['current_q'] += 1
-    buttons = []
-    for i, option in enumerate(question['options']):
-        style_code = question['mapping'][i]
-        prefix = "✅ " if style_code == answer else ""
-        buttons.append([InlineKeyboardButton(
-            text=prefix + option,
-            callback_data="disabled"  # Disable further clicks
-        )])
-
-    feedback_kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-
-    # Edit message with feedback keyboard
-    await callback.message.edit_reply_markup(reply_markup=feedback_kb)
-
-    # Pause briefly (optional, to show feedback before next question)
-    await asyncio.sleep(1.5)
-
-    # Send next question
+    previous_answers = []
+    for i, (prev_option, prev_mapping) in enumerate(zip(question['options'], question['mapping'])):
+        prefix = "✅ " if prev_mapping == answer else "⬜ "
+        previous_answers.append(f"{prefix}{prev_option}")
+    await callback.message.edit_text(
+        f"{question['text']}\n\n<b>Your answer:</b>\n" + "\n".join(previous_answers)
+    )
     await send_question(callback.message.chat.id, user_id)
 
 
@@ -466,59 +465,42 @@ async def webhook(request):
         return web.Response(text="Internal server error", status=500)
 
 
-async def on_startup(app):
-    try:
-        logger.info("Запуск бота...")
-        logger.info(f"Токен бота: {API_TOKEN[:10]}...")
-
-        # Проверяем информацию о боте
-        bot_info = await bot.get_me()
-        logger.info(f"Информация о боте: {bot_info}")
-
-        # Удаляем старый вебхук
-        logger.info("Удаление старого вебхука...")
-        await bot.delete_webhook(drop_pending_updates=True)
-
-        # Получаем URL из переменных окружения
-        webhook_url = os.getenv('WEBHOOK_URL', 'https://conflictresolutionbot.onrender.com/webhook')
-        logger.info(f"Установка вебхука на URL: {webhook_url}")
-
-        # Устанавливаем новый вебхук
-        await bot.set_webhook(url=webhook_url)
-        logger.info("Вебхук успешно установлен")
-
-        # Проверяем статус вебхука
-        webhook_info = await bot.get_webhook_info()
-        logger.info(f"Информация о вебхуке: {webhook_info}")
-    except Exception as e:
-        logger.error(f"Ошибка при запуске: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise
+# async def on_startup(app):
+#     try:
+#         logger.info("Запуск бота...")
+#         logger.info(f"Токен бота: {API_TOKEN[:10]}...")
+#         bot_info = await bot.get_me()
+#         logger.info(f"Информация о боте: {bot_info}")
+#         logger.info("Удаление старого вебхука...")
+#         await bot.delete_webhook(drop_pending_updates=True)
+#         webhook_url = os.getenv('WEBHOOK_URL', 'https://conflictresolutionbot.onrender.com/webhook')
+#         logger.info(f"Установка вебхука на URL: {webhook_url}")
+#         await bot.set_webhook(url=webhook_url)
+#         logger.info("Вебхук успешно установлен")
+#         webhook_info = await bot.get_webhook_info()
+#         logger.info(f"Информация о вебхуке: {webhook_info}")
+#     except Exception as e:
+#         logger.error(f"Ошибка при запуске: {e}")
+#         logger.error(f"Traceback: {traceback.format_exc()}")
+#         raise
 
 
-async def on_shutdown(app):
-    try:
-        logger.info("Остановка бота...")
-        await bot.session.close()
-    except Exception as e:
-        logger.error(f"Ошибка при остановке: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
+# async def on_shutdown(app):
+#     try:
+#         logger.info("Остановка бота...")
+#         await bot.session.close()
+#     except Exception as e:
+#         logger.error(f"Ошибка при остановке: {e}")
+#         logger.error(f"Traceback: {traceback.format_exc()}")
 
 
 def main():
     try:
-        # Создаем веб-приложение
         app = web.Application()
-
-        # Добавляем обработчики
         app.router.add_post('/webhook', webhook)
         app.router.add_get('/', lambda request: web.Response(text="Bot is running"))
-
-        # Добавляем обработчики запуска и остановки
-        app.on_startup.append(on_startup)
-        app.on_shutdown.append(on_shutdown)
-
-        # Запускаем приложение
+        # app.on_startup.append(on_startup)
+        # app.on_shutdown.append(on_shutdown)
         web.run_app(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))
     except Exception as e:
         logger.error(f"Ошибка при запуске приложения: {e}")
