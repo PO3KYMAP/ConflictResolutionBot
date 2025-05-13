@@ -354,6 +354,7 @@ async def cmd_test(message: Message):
         user_id = message.from_user.id
         user_data[user_id] = {"current_q": 0, "answers": []}
         await send_question(message.chat.id, user_id)
+        print("Write /reset to restart the test")
         logger.info(f"Тест начат для пользователя {message.from_user.id}")
     except Exception as e:
         logger.error(f"Ошибка при обработке команды /test: {e}")
