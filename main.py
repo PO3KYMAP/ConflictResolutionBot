@@ -426,12 +426,16 @@ async def answer_callback(callback: CallbackQuery):
     question = questions[q_index]
     state['answers'].append(answer)
     state['current_q'] += 1
-    previous_answers = []
-    for i, (prev_option, prev_mapping) in enumerate(zip(question['options'], question['mapping'])):
-        prefix = "✅ " if prev_mapping == answer else "⬜ "
-        previous_answers.append(f"{prefix}{prev_option}")
-    await callback.message.edit_text(
-        f"{question['text']}\n\n<b>Your answer:</b>\n" + "\n".join(previous_answers)
+    buttons = []
+    for i, (option, mapping) in enumerate(zip(question['options'], question['mapping'])):
+        prefix = "✅ " if mapping == answer else "⬜ "
+        buttons.append([InlineKeyboardButton(
+            text=prefix + option,
+            callback_data=f"answer:{mapping}",
+            disabled=True  # Делаем все кнопки неактивными
+        )])
+    await callback.message.edit_reply_markup(
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
     )
     await send_question(callback.message.chat.id, user_id)
 
