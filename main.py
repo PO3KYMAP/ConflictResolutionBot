@@ -240,6 +240,7 @@ async def cmd_start(message: Message):
             "Use /info to get in detail about this project.\n"
             "Use /test to start the assessment!\n"
             "Or /styles to learn about all conflict styles."
+            "Or /resources to get in know with useful literature"
         )
         await message.answer(text)
         logger.info(f"Ответ на команду /start отправлен пользователю {message.from_user.id}")
@@ -289,7 +290,7 @@ async def cmd_info(message: Message):
             "• Clear descriptions of all 5 conflict styles\n"
             "• Tailored recommendations based on results\n"
             "• User-friendly interface with intuitive buttons\n\n"
-            "Use /test to start the assessment or /styles to learn about all styles!"
+            "Use /test to start the assessment, /styles to learn about all styles! or /resources to learn about all conflict styles."
         )
         await message.answer(text)
         logger.info(f"Ответ на команду /info отправлен пользователю {message.from_user.id}")
