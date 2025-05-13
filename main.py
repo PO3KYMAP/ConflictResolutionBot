@@ -242,6 +242,7 @@ async def cmd_start(message: Message):
             "🛠️ This is a soft skills portfolio project by <b>Bohdan Sharloimov</b>\n"
             "Student ID: <b>104936</b>\n\n"
             "Use /info to get in detail about this project.\n"
+            "Use /resources to get useful learning resources.\n"
             "Use /test to start the assessment!\n"
             "Or /styles to learn about all conflict styles."
         )
