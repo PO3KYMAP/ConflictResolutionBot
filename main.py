@@ -235,52 +235,136 @@ def get_style_summary(scores):
 
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
-    text = (
-        "<b>Welcome to the Conflict Resolution Style Test Bot!</b>\n\n"
-        "🛠️ This is a soft skills portfolio project by <b>Bohdan Sharloimov</b>\n"
-        "Student ID: <b>104936</b>\n\n"
-        "Use /info to get in detail about this project.\n"
-        "Use /test to start the assessment!\n"
-        "Or /styles to learn about all conflict styles."
-    )
-    await message.answer(text)
+    try:
+        logger.info(f"Получена команда /start от пользователя {message.from_user.id}")
+        text = (
+            "<b>Welcome to the Conflict Resolution Style Test Bot!</b>\n\n"
+            "🛠️ This is a soft skills portfolio project by <b>Bohdan Sharloimov</b>\n"
+            "Student ID: <b>104936</b>\n\n"
+            "Use /info to get in detail about this project.\n"
+            "Use /test to start the assessment!\n"
+            "Or /styles to learn about all conflict styles."
+        )
+        await message.answer(text)
+        logger.info(f"Ответ на команду /start отправлен пользователю {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /start: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        try:
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+        except:
+            pass
 
 
 @dp.message(Command("styles"))
 async def cmd_styles(message: Message):
-    text = "<b>Conflict Resolution Styles Overview:</b>\n\n"
-    for desc in style_descriptions.values():
-        text += f"{desc}\n\n"
-    await message.answer(text)
+    try:
+        logger.info(f"Получена команда /styles от пользователя {message.from_user.id}")
+        text = "<b>Conflict Resolution Styles Overview:</b>\n\n"
+        for desc in style_descriptions.values():
+            text += f"{desc}\n\n"
+        await message.answer(text)
+        logger.info(f"Ответ на команду /styles отправлен пользователю {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /styles: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        try:
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+        except:
+            pass
 
 
 @dp.message(Command("info"))
 async def cmd_info(message: Message):
-    text = (
-        "<b>ℹ️ About This Bot</b>\n\n"
-        "This bot is designed to help users identify their dominant <b>Conflict Resolution Style</b> through an interactive assessment.\n\n"
-        "💡 <b>Purpose:</b>\n"
-        "• Raise awareness of different conflict-handling strategies.\n"
-        "• Provide users with actionable insights on how they approach conflicts.\n"
-        "• Offer guidance on how to leverage their preferred style effectively.\n\n"
-        "🛠️ <b>Developed by:</b> Bohdan Sharloimov\n"
-        "🎓 <b>University Soft Skills Portfolio Project</b>\n"
-        "🆔 <b>Student ID:</b> 104936\n\n"
-        "<b>Key Features:</b>\n"
-        "• 15 scenario-based questions\n"
-        "• Clear descriptions of all 5 conflict styles\n"
-        "• Tailored recommendations based on results\n"
-        "• User-friendly interface with intuitive buttons\n\n"
-        "Use /test to start the assessment or /styles to learn about all styles!"
-    )
-    await message.answer(text)
+    try:
+        logger.info(f"Получена команда /info от пользователя {message.from_user.id}")
+        text = (
+            "<b>ℹ️ About This Bot</b>\n\n"
+            "This bot is designed to help users identify their dominant <b>Conflict Resolution Style</b> through an interactive assessment.\n\n"
+            "💡 <b>Purpose:</b>\n"
+            "• Raise awareness of different conflict-handling strategies.\n"
+            "• Provide users with actionable insights on how they approach conflicts.\n"
+            "• Offer guidance on how to leverage their preferred style effectively.\n\n"
+            "🛠️ <b>Developed by:</b> Bohdan Sharloimov\n"
+            "🎓 <b>University Soft Skills Portfolio Project</b>\n"
+            "🆔 <b>Student ID:</b> 104936\n\n"
+            "<b>Key Features:</b>\n"
+            "• 15 scenario-based questions\n"
+            "• Clear descriptions of all 5 conflict styles\n"
+            "• Tailored recommendations based on results\n"
+            "• User-friendly interface with intuitive buttons\n\n"
+            "Use /test to start the assessment or /styles to learn about all styles!"
+        )
+        await message.answer(text)
+        logger.info(f"Ответ на команду /info отправлен пользователю {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /info: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        try:
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+        except:
+            pass
+
+
+@dp.message(Command("resources"))
+async def cmd_resources(message: Message):
+    try:
+        logger.info(f"Получена команда /resources от пользователя {message.from_user.id}")
+        text = (
+            "<b>📚 Useful Resources for Conflict Resolution</b>\n\n"
+            "<b>📖 Books:</b>\n"
+            "• <i>«Difficult Conversations»</i> - Douglas Stone\n"
+            "• <i>«Don't Shoot the Dog»</i> - Karen Pryor\n"
+            "• <i>«The Power of a Positive No»</i> - William Ury\n\n"
+            "<b>🌐 Articles and Blogs:</b>\n"
+            "• Harvard Business Review - Conflict Management Section\n"
+            "• Psychology Today - Communication Articles\n"
+            "• MindTools - Conflict Resolution Guides\n\n"
+            "<b>🎯 Practical Exercises:</b>\n"
+            "1. <b>Active Listening:</b>\n"
+            "   • Practice paraphrasing\n"
+            "   • Ask clarifying questions\n"
+            "   • Use mirroring technique\n\n"
+            "2. <b>Emotional Intelligence:</b>\n"
+            "   • Keep an emotion journal\n"
+            "   • Practice empathy\n"
+            "   • Develop self-awareness\n\n"
+            "3. <b>Mediation:</b>\n"
+            "   • Role-playing exercises\n"
+            "   • De-escalation techniques\n"
+            "   • Practice neutral language\n\n"
+            "<b>🎓 Online Courses:</b>\n"
+            "• Coursera: «Conflict Management»\n"
+            "• edX: «Effective Communication»\n"
+            "• Udemy: «Workplace Conflict Resolution»\n\n"
+            "<i>Keep updating your knowledge and practicing new techniques!</i>"
+        )
+        await message.answer(text)
+        logger.info(f"Ответ на команду /resources отправлен пользователю {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /resources: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        try:
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+        except:
+            pass
 
 
 @dp.message(Command("test"))
 async def cmd_test(message: Message):
-    user_id = message.from_user.id
-    user_data[user_id] = {"current_q": 0, "answers": []}
-    await send_question(message.chat.id, user_id)
+    try:
+        logger.info(f"Получена команда /test от пользователя {message.from_user.id}")
+        user_id = message.from_user.id
+        user_data[user_id] = {"current_q": 0, "answers": []}
+        await send_question(message.chat.id, user_id)
+        logger.info(f"Тест начат для пользователя {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /test: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        try:
+            await message.answer("Произошла ошибка при обработке команды. Пожалуйста, попробуйте позже.")
+        except:
+            pass
 
 
 async def send_question(chat_id, user_id):
